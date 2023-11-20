@@ -7,12 +7,11 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AspNetCoreIdentity.Web.styles.css" asp-append-version="true" />
-    @await RenderSectionAsync("Css", required: false) <!-- template kullanıyosan cssi istediğin yerde tanımlayabilirsin buradan çalışır section başlığı Css ile-->
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+            <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">AspNetCoreIdentity.Web</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
@@ -21,16 +20,16 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link" asp-area="Admin" asp-controller="Home" asp-action="Index">Admin anasayfa</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link" asp-area="Admin" asp-controller="Home" asp-action="UserList">Üye Liste</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Anasayfaya Dön</a>
                         </li>
                     </ul>
                 </div>
-               
-                <a class="btn btn-outline-success" asp-area="" asp-controller="Home" asp-action="SignUp">Kullanıcı Ekle</a> <!-- üye kayıt butonu yönendirme-->
-
             </div>
         </nav>
     </header>

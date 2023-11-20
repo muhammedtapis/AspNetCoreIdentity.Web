@@ -1,0 +1,73 @@
+﻿@{
+    ViewData["Title"] = "SignUp";
+}
+@model SignUpViewModel
+<!-- _Layout.cshtml dosyasındaki scripts bölümüne eklenecek scripts-->
+@section Scripts 
+{
+    @await Html.PartialAsync("_ValidationScriptsPartial") <!-- validation kütüphanesini buraya da ekledik client-side validation yapcaz.->
+}
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h2>Kullanıcı Kayıt Formu</h2>
+
+        @if (TempData["SuccessMessage"] != null) //eğer ki ViewBag.SuccessMessage boş değilse yada tempdata
+        {
+            <div class="alert alert-info" role="alert">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+         
+        <div asp-validation-summary=ModelOnly class ="alert alert-danger" role="alert"> <!-- Model ile ilgili hatalar mesela aynı kullanıcı adından var ise-->
+
+        </div>
+
+        <form asp-controller="Home" asp-action="SignUp" method="post"> <!-- bu formumuz home controllerdaki SıgnUp action kullancak post methodu olacak-->
+            <div class="row mb-3">
+                <label for="Username" class="col-md-4 col-form-label" asp-for="Username"></label>
+                <div class="col-md-8">
+                    <input asp-for="Username" class="form-control">
+                    <span class="text-danger" asp-validation-for="Username"></span> <!-- signupViewmodel içindeli validation attr burada gözükecek.-->
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label for="Email" class="col-md-4 col-form-label" asp-for="Email"></label>
+                <div class="col-md-8">
+                    <input asp-for="Email" class="form-control">
+                    <span class="text-danger" asp-validation-for="Email"></span> <!-- signupViewmodel içindeli validation attr burada gözükecek.-->
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label for="Phone" class="col-md-4 col-form-label" asp-for="Phone"></label>
+                <div class="col-md-8">
+                    <input asp-for="Phone" class="form-control">
+                    <span class="text-danger" asp-validation-for="Phone"></span> <!-- signupViewmodel içindeli validation attr burada gözükecek.-->
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label for="Password" class="col-md-4 col-form-label" asp-for="Password"></label>
+                <div class="col-md-8">
+                    <input asp-for="Password" class="form-control">
+                    <span class="text-danger" asp-validation-for="Password"></span> <!-- signupViewmodel içindeli validation attr burada gözükecek.-->
+
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label for="PasswordConfirm" class="col-md-4 col-form-label" asp-for="PasswordConfirm"></label>
+                <div class="col-md-8">
+                    <input asp-for="PasswordConfirm" class="form-control">
+                    <span class="text-danger" asp-validation-for="PasswordConfirm"></span> <!-- signupViewmodel içindeli validation attr burada gözükecek.-->
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-8 offset-md-4">
+                    <button type="submit" class="btn btn-primary">Kayıt Ol</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+

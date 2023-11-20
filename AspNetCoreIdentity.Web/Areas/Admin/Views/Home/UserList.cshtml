@@ -1,0 +1,31 @@
+﻿
+@{
+    ViewData["Title"] = "UserList";
+}
+@model List<UserViewModel> //artık burada beklediğimiz modeli belirtiyoruz. userviewmodel alan bir liste gelecek. bunun namespaceini viewimportsda belirttik.
+<h1>Üye Liste</h1>
+
+<!-- TABLO OLUŞTURMA-->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Kullanıcı Adı</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var item in Model) //modelden list geliyo onu foreach ile dönüp yazdırıyoruz.
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>@item.Email</td>
+            </tr>
+        }  
+
+    </tbody>
+</table>
+
