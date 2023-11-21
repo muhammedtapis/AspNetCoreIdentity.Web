@@ -1,0 +1,55 @@
+﻿
+@{
+    ViewData["Title"] = "SignIn";
+}
+
+@model SignInViewModel //bu modeli belirtmezsen proplara erişemez işlem yapamazsın mal çocuk.
+
+@section Scripts
+{
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+    <!-- validation kütüphanesini buraya da ekledik client-side validation yapcaz.->
+     <!-- bu cshtml dosyası ana klasördeki viewin altındaki shared klasöründe biz o validation kütüphanelerine ihtiyaç duyuyoruz-->
+    <!-- signup sayfasında da validation kullancağımız için ekliyoruz buraya.-->
+}
+
+<div class="row">
+
+    <div class="col-md-4 offset-md-4">
+        <h1>Kullanıcı Giriş</h1>
+
+        <div asp-validation-summary=ModelOnly class="alert alert-danger" role="alert"> 
+            <!-- Model ile ilgili hatalar mesela aynı kullanıcı adından var ise ModelState den gelen hatalar.-->
+
+        </div>
+        <form asp-controller="Home" asp-action="SignIn" asp-route-returnurl="@Context.Request.Query["returnUrl"]" method="post">  <!-- bu formun methodun tipi nereye gideceği vs belirtmen gerekiyor.-->
+            <div class="mb-3">                <!-- sistem üye girişe yönlendirdikten sonra giriş yapınca döneceğimiz return url bu returnUrl [HttpPost] SignIn methodunun parametresiyle aynı-->
+                <label for="Email" class="form-label" asp-for="Email"></label>
+                <input value ="muhammedtapis@gmail.com" class="form-control" asp-for="Email">
+                <span class="text-danger" asp-validation-for="Email"></span>
+            </div>
+            <div class="mb-3">
+                <label for="Password" class="form-label" asp-for="Password"></label>
+                <input value="Password12*" type="password" class="form-control" asp-for="Password">
+                <span class="text-danger" asp-validation-for="Password"></span>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" asp-for="RememberMe">
+                        <label class="form-check-label" for="RememberMe" asp-for="RememberMe"></label> <!--labeldeki for kısmı labele tıklayınca focuslancak yeri belirtiyo.-->
+                    </div>
+                </div>
+                <div class="col-md-6 me-0">
+                    <a class="btn btn-outline-secondary float-end" asp-controller="Home" asp-action="ForgetPassword">Şifremi Unuttum</a> <!--şifre sıfırlama linki-->
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Üye Giriş</button>
+            <div>
+            </div>
+        </form>
+
+    </div>
+</div>
+

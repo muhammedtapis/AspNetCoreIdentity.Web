@@ -6,11 +6,13 @@
 @section Scripts 
 {
     @await Html.PartialAsync("_ValidationScriptsPartial") <!-- validation kütüphanesini buraya da ekledik client-side validation yapcaz.->
+                                                           <!-- bu cshtml dosyası ana klasördeki viewin altındaki shared klasöründe biz o validation kütüphanelerine ihtiyaç duyuyoruz-->
+                                                           <!-- signup sayfasında da validation kullancağımız için ekliyoruz buraya.-->
 }
 
 <div class="row">
     <div class="col-md-6 offset-md-3">
-        <h2>Kullanıcı Kayıt Formu</h2>
+        <h2>Kullanıcı Kayıt</h2>
 
         @if (TempData["SuccessMessage"] != null) //eğer ki ViewBag.SuccessMessage boş değilse yada tempdata
         {

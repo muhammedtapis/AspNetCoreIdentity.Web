@@ -1,5 +1,6 @@
 using AspNetCoreIdentity.Web.Extensions;
 using AspNetCoreIdentity.Web.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,9 +33,29 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //bu identity kütüphanesinin kullanacaðý dbContexti belirtiyoruz.
 
 
-//namespace ekledik ve yukarýda yorumiçinde olan kodla ayný iþi yapýyoruz.
+
+
+//namespace extension ekledik ve yukarýda yorumiçinde olan kodla ayný iþi yapýyoruz.
 builder.Services.AddIdentityWithExtension();
 
+//COOKIE options
+builder.Services.ConfigureApplicationCookie(options =>
+{
+
+    var cookieBuilder = new CookieBuilder();
+    cookieBuilder.Name = "UdemyAppCookie";
+
+    //kullanýcýlar üye olmadan üyelere özel sayfalara giriþ yapmaya çalýþanlar için onlarý login sayfasýna yönlendirdiyoruz
+    //frameworke , üye ol sayfasýný belirtiyoruz
+
+    options.LoginPath = new PathString("/Home/SignIn");   //giriþin yapýldýðý yer Identity buradan üyelerin girip giremeyeceði yerleri anlýyo girmesini istemediðimiz controllerlara ya da sayfalara [Authorize] yazýyoruz.
+    options.LogoutPath = new PathString("/Member/LogOut");  //çýkýþýn yapýldýðý yeri belirtiyoruz. yönlendirileceði sayfayý navbarLogin de verdik
+    
+    options.Cookie = cookieBuilder;
+    options.ExpireTimeSpan = TimeSpan.FromDays(60); //cookie ömrü.
+    options.SlidingExpiration = true;  //cookienin expiretimespan ini arttýrmaya yarýyor o 60 gün içinde bir kez giriþ yapýlsa bile yine 60 gün uzatýlcak.
+
+});
 var app = builder.Build();
 
 
@@ -56,7 +77,8 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthorization();
+app.UseAuthentication(); //kimlik doðrulama her zaman authorizationdan once gelir.
+app.UseAuthorization();  //kimlik yetkilendirme
 
 app.MapControllerRoute( //oluþturulan areanýn readme.txt dosyasýndaki kodu ekle -- bunu defaultun altýnda yazarsan çalýþmýyor düzgün.
     name: "areas",

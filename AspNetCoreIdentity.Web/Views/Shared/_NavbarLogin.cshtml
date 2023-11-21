@@ -1,0 +1,19 @@
+﻿
+@if (User.Identity!.IsAuthenticated)
+{ //eğer ki login olursa bu navbar gözükecek
+    <ul class="navbar-nav me-0">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                @User.Identity.Name                <!-- kullanıcının ismi gözükcek-->
+            </a>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item" asp-route-returnurl="/Home/Index" asp-controller="Member" asp-action="LogOut">Çıkış Yap</a></li>
+            </ul>
+        </li>
+    </ul>
+}
+else //eğer login değilse bu butonlar gözükecek
+{
+    <a class="btn btn-outline-success mx-2" asp-area="" asp-controller="Home" asp-action="SignIn">Üye Giriş</a>
+    <a class="btn btn-outline-success" asp-area="" asp-controller="Home" asp-action="SignUp">Üye Ekle</a> <!-- üye kayıt butonu yönendirme-->
+}

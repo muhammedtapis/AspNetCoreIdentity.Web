@@ -27,10 +27,11 @@
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                         </li>
                     </ul>
-                </div>
-               
-                <a class="btn btn-outline-success" asp-area="" asp-controller="Home" asp-action="SignUp">Kullanıcı Ekle</a> <!-- üye kayıt butonu yönendirme-->
+                    
+                    <!--PARTIAL VIEW _NavbarLogin.cshtml-->
+                    <partial name ="_NavbarLogin"/>    <!--partialview shared içindeyse direkt ismini yazabilirsin.-->
 
+                </div>
             </div>
         </nav>
     </header>
