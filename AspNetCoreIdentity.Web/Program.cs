@@ -1,5 +1,7 @@
 using AspNetCoreIdentity.Web.Extensions;
 using AspNetCoreIdentity.Web.Models;
+using AspNetCoreIdentity.Web.OptionsModels;
+using AspNetCoreIdentity.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -38,6 +40,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 //namespace extension ekledik ve yukarýda yorumiçinde olan kodla ayný iþi yapýyoruz.
 builder.Services.AddIdentityWithExtension();
 
+//EMAIL konfigürasyon
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));  //appsettingsteki sectionu veriyoruz
+builder.Services.AddScoped<IEmailService, EmailService>(); //IEmailService e herhangi bi classýn ctorunda karþýlaþýrsan bitane EmailService nesne örneði oluþtur demek.
+//AddScope yapmamýzýn sebebi request yaþam döngüsü request response döndüðü anda EmailService memoryden gitsin request gelýnce tekrar oluþtursun
+
+
 //COOKIE options
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -65,7 +73,7 @@ var app = builder.Build();
 
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+if (!app.Environment.IsDevelopment()) //eðer development ortamýnda deðilse Error.cshtml yönlendir ama deðilse normal exception patlat sayfada
 {
     app.UseExceptionHandler("/Home/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.

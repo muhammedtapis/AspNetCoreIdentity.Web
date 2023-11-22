@@ -1,10 +1,12 @@
 ﻿using AspNetCoreIdentity.Web.Extensions;
 using AspNetCoreIdentity.Web.Models;
+using AspNetCoreIdentity.Web.Services;
 using AspNetCoreIdentity.Web.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using NuGet.Common;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace AspNetCoreIdentity.Web.Controllers
@@ -17,11 +19,14 @@ namespace AspNetCoreIdentity.Web.Controllers
         private readonly UserManager<AppUser> _userManager; //kullanıcı ile ilgili işlem için kullancağımız sınıf. Identity kütüphanesinden geliyo.
 
         private readonly SignInManager<AppUser> _signInManager;  //kullanıcı giriş için eklendi bu.
-        public HomeController(ILogger<HomeController> logger, UserManager<AppUser> userManager,SignInManager<AppUser> signInManager)
+
+        private readonly IEmailService _emailService;
+        public HomeController(ILogger<HomeController> logger, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailService emailService)
         {
             _logger = logger;
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailService = emailService;
         }
 
         public IActionResult Index()
@@ -55,7 +60,7 @@ namespace AspNetCoreIdentity.Web.Controllers
                                                                                                  //kullanıcı login olduktan sonra girmeye çalıştığı bir önceki sayfaya yönlendirme yapmak. 
             returnUrl = returnUrl ?? Url.Action("Index","Home");  //eğer gelen değer null ise Url.Action() methodu çalışacak homecontroller anasayfaya gidecek.
                                                                    
-            var hasUser = await _userManager.FindByEmailAsync(request.Email); //ViewModelden gelen modelin emaili varsa
+            var hasUser = await _userManager.FindByEmailAsync(request.Email!); //ViewModelden gelen modelin emaili varsa
                                                                               //eğer bu mailden databasede birden fazla varsa exception atıyor!!!!!!!!
             
             if(hasUser == null)
@@ -64,11 +69,11 @@ namespace AspNetCoreIdentity.Web.Controllers
                 return  View();
             }
 
-            var signInResult = await _signInManager.PasswordSignInAsync(hasUser, request.Password, request.RememberMe,true); //parantezin içindeki en sağdaki false yanlış girişlerde sistemi kitleme oluyo
+            var signInResult = await _signInManager.PasswordSignInAsync(hasUser, request.Password!, request.RememberMe,true); //parantezin içindeki en sağdaki false yanlış girişlerde sistemi kitleme oluyo
                                                                                                                         //kullanıcı 5 defa yanlış girse sistem kitleniyo bunu şimdilik false yaptık sonra trueçeviridk.
             if (signInResult.Succeeded)
             {
-                return Redirect(returnUrl);
+                return Redirect(returnUrl!);
             }
 
             if (signInResult.IsLockedOut) //lock olursa bura çalışcak
@@ -105,7 +110,7 @@ namespace AspNetCoreIdentity.Web.Controllers
             //hash algoritmaları MD5,SHA,512... istersek Identity hash algoritmasını değiştirebiliriz ama yapmıycaz defaultu güçlü bi algoritma
             //dbde hata varsa aynı kullanıcı adı vs bu identityREsult ile alıyoruz.
             var identityResult = await _userManager.CreateAsync(new AppUser() { UserName = request.Username, PhoneNumber = request.Phone, Email = request.Email }
-             , request.PasswordConfirm);
+             , request.PasswordConfirm!);
 
 
             if (identityResult.Succeeded)
@@ -138,8 +143,8 @@ namespace AspNetCoreIdentity.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> ForgetPassword(ForgetPasswordViewModel request)
         {
-            //user email kontrolü
-            var hasUser = await _userManager.FindByEmailAsync(request.Email);
+            //user emaili  var mı  kontrolü
+            var hasUser = await _userManager.FindByEmailAsync(request.Email!);
 
             if(hasUser== null)
             {
@@ -147,20 +152,67 @@ namespace AspNetCoreIdentity.Web.Controllers
                 return View(); //requestler durum tutmazlar bu sebeple return view dedik return direct deseydik modelStatedeki veriyi kaybederdik temp datayla taşımak zorunda kalırdık.
             }
 
-            string passwordResetToken = await _userManager.GeneratePasswordResetTokenAsync(hasUser);
+            string passwordResetToken = await _userManager.GeneratePasswordResetTokenAsync(hasUser); //token oluştur hasUser kullanıcısı için.
 
-            var passwordResetLink = Url.Action("ResetPassword", "Home", new { userId = hasUser.Id, Token = passwordResetToken });  //url oluşturma birinci kısım action ikinci kısım controller
+            var passwordResetLink = Url.Action("ResetPassword", "Home", new { userId = hasUser.Id, Token = passwordResetToken }
+            ,HttpContext.Request.Scheme);                        //url oluşturma birinci kısım action ikinci kısım controller
             //örnek link göndercez
             //https://localhost:7188?userId=12341&token=lakjbskahbsdiadjlnaksd  //token göndermemizin sebebi gönderilen bu şifre sıfırlama linkine geçerlilik süresi  vericez
 
             //email service
 
+            await _emailService.SendResetPasswordEmail(passwordResetLink!,hasUser.Email!);
+
             TempData["SuccessMessage"] = "Şifre sıfırlama bağlantısı e-posta adresinize gönderilmiştir";
 
-            return RedirectToAction(nameof(ForgetPassword));
+            return RedirectToAction(nameof(ForgetPassword)); //return view yaparsak göndere bastıktan sonra sayfayı yenilerse o maili tekrar göndericek o yüzden HttpGet ForgetPAssword gönderdik.
         }
 
 
+        public IActionResult ResetPassword(string userId,string token) //get methodundaki resetpasswordün linkinde bize lazım olan userid ve token alanları var onları post methoduna göndermemiz gerek.
+        {
+            TempData["UserId"] = userId; //bu tempdatalar bir defa okunabilir sayfa yenilenirse bu okunamaz kullanıcı emaildeki linke tıklayınca bu bilgiler                                     
+            TempData["Token"] = token;   //linkte yazılı gelir framework bu bilgileri ForgetPassword actionunda oluşturulan passwordResetLinkteki userId ve Token ifadeleriyle
+                                         //Tempdata içine yazdığımız UserId ve Token tamamen aynı olduğu için kendisi mapliyor. !!!!!!!
+
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel request)
+        {
+            var userId = TempData["UserId"]; //ResetPassword post methodunda userid ve token bilgilerine ihtiyacımız olduğu için tempdata ile tuttuk ve burada aldık.
+            var token = TempData["Token"];
+
+            if(userId == null || token == null)
+            {
+                throw new Exception("Bir hata meydana geldi");
+                //ileriki derslerde bu exceptionu Error.cshtml sayfasına yönlendircez
+            }
+
+            var hasUser = await _userManager.FindByIdAsync(userId.ToString()!); //yukarıdaki null checkten geçtikleri için null olamazlar zaten o yğzden ! ile belirttik.
+
+            if (hasUser == null)
+            {
+                ModelState.AddModelError(string.Empty, "Kullanıcı bulunamamıştır");
+                return View();
+            }
+
+            var result = await _userManager.ResetPasswordAsync(hasUser,token.ToString()!,request.Password!); //bu işlemle kullanıcının şifresi yenileniyor.ResetPassword sayfasından alınan bilgilerle.
+
+            if (result.Succeeded) 
+            {
+                TempData["SuccessMessage"] = "Şifreniz başarıyla yenilenmiştir.";
+            }
+            else
+            {
+                ModelState.AddModelErrorList(result.Errors.Select(x => x.Description).ToList());//şifre yenilemede hata varsa onu göstericez.
+                
+            }
+            return View();
+
+
+        }
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
