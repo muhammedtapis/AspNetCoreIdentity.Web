@@ -1,3 +1,4 @@
+using AspNetCoreIdentity.Web.Areas.Admin.Models;
 using AspNetCoreIdentity.Web.Extensions;
 using AspNetCoreIdentity.Web.Models;
 using AspNetCoreIdentity.Web.OptionsModels;
@@ -43,6 +44,7 @@ builder.Services.AddIdentityWithExtension();
 //EMAIL konfigürasyon
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));  //appsettingsteki sectionu veriyoruz
 builder.Services.AddScoped<IEmailService, EmailService>(); //IEmailService e herhangi bi classýn ctorunda karþýlaþýrsan bitane EmailService nesne örneði oluþtur demek.
+builder.Services.AddScoped<IPagination, Pagination>();
 //AddScope yapmamýzýn sebebi request yaþam döngüsü request response döndüðü anda EmailService memoryden gitsin request gelýnce tekrar oluþtursun
 
 

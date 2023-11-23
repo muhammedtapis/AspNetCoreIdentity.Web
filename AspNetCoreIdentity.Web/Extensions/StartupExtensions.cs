@@ -37,12 +37,12 @@ namespace AspNetCoreIdentity.Web.Extensions
 
 
             })
-            .AddPasswordValidator<PasswordValidator>() //bu alan customvalidatorü identitymize tanıtıp çağırmak için.
+            .AddPasswordValidator<PasswordValidator>() //bu alan customvalidatorü identitymize tanıtıp çağırmak için.oluşturduğmuz custom passwordvalidatoru Identity ye belirttik.
             .AddUserValidator<UserValidator>()        //custom user validator.
             .AddErrorDescriber<LocalizationIdentityErrorDescriber>() //mesajları türkçeye çevirdiğimiz sınıfı verdik.
             .AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();    //şifre yenileme linki için token kullancaz burada ekliyoruz identitye
-            //oluşturduğmuz custom passwordvalidatoru Identity ye belirttik.
+            
         }
     }
 }
