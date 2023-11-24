@@ -58,6 +58,11 @@ namespace AspNetCoreIdentity.Web.Controllers
         {                                                                                        //bu sayfa üye girişi gerektiriyorsa buraya yönlendirme yapmak için verdik.
                                                                                                  //her zaman vermek zounda olmadığımız için de null atadık default
                                                                                                  //kullanıcı login olduktan sonra girmeye çalıştığı bir önceki sayfaya yönlendirme yapmak. 
+            if (!ModelState.IsValid) //html sayfasından gelen SignInViewModel boş değil kontrolü
+            {
+                return View();
+            }
+
             returnUrl = returnUrl ?? Url.Action("Index","Home");  //eğer gelen değer null ise Url.Action() methodu çalışacak homecontroller anasayfaya gidecek.
                                                                    
             var hasUser = await _userManager.FindByEmailAsync(request.Email!); //ViewModelden gelen modelin emaili varsa

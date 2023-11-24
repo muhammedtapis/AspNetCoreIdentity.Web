@@ -20,7 +20,9 @@ namespace AspNetCoreIdentity.Web.Services
                 Name = x.UserName,
                 Email = x.Email,
 
-            }).Where(x => x.Name == "mami" || x.Name == "ali").ToList();
+            })
+             //.Where(x => x.Name == "mami" || x.Name == "diyara") istersen sorgu da ekleyebiliyosun
+            .ToList();
 
             return await Task.FromResult(userViewModelList);
 

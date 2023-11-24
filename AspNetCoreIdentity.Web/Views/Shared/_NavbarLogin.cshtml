@@ -7,6 +7,9 @@
                 @User.Identity.Name                <!-- kullanıcının ismi gözükcek-->
             </a>
             <ul class="dropdown-menu">
+                <li><a class="dropdown-item" asp-controller="Member" asp-action="Index">Profil</a></li>
+                <li><a class="dropdown-item" asp-controller="Member" asp-action="PasswordChange">Şifre Değiştir</a></li>
+                <li><a class="dropdown-item" asp-controller="Member" asp-action="UserEdit">Kullanıcı Güncelle</a></li>
                 <li><a class="dropdown-item" asp-route-returnurl="/Home/Index" asp-controller="Member" asp-action="LogOut">Çıkış Yap</a></li>
             </ul>
         </li>

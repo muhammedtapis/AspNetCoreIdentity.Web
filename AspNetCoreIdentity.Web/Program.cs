@@ -5,6 +5,7 @@ using AspNetCoreIdentity.Web.OptionsModels;
 using AspNetCoreIdentity.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,6 +47,11 @@ builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("Emai
 builder.Services.AddScoped<IEmailService, EmailService>(); //IEmailService e herhangi bi classýn ctorunda karþýlaþýrsan bitane EmailService nesne örneði oluþtur demek.
 builder.Services.AddScoped<IPagination, Pagination>();
 //AddScope yapmamýzýn sebebi request yaþam döngüsü request response döndüðü anda EmailService memoryden gitsin request gelýnce tekrar oluþtursun
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.FromSeconds(30); //30 dakikada bir security stamp deðeri karþýlaþtýrmasý için konf.
+});
+
 
 
 //COOKIE options
@@ -66,7 +72,18 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;  //cookienin expiretimespan ini arttýrmaya yarýyor o 60 gün içinde bir kez giriþ yapýlsa bile yine 60 gün uzatýlcak.
 
 });
+
+
+//WWWROOT eriþim ayarý userpictures dosyasýna eriþmek için
+builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Directory.GetCurrentDirectory())); //herhangi bir classýn constructorunda IFileprovider verirsen projedeki tüm klasörlere eriþim saðlarsýn.!!!
+
+
 var app = builder.Build();
+
+//referans noktamýz ise içiçnde olduðumuz genel proje klasörü olarak verdilk => Directory.GetCurrentDirectory()              
+
+
+
 
 
 //yukarýdaki kod bloðu önceki projelerde kullandýðýn configureServices methoduyla ayný servisleri eklediðimiz yer.

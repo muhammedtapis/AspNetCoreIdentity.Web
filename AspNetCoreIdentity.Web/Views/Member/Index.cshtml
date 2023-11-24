@@ -2,6 +2,40 @@
 @{
     ViewData["Title"] = "Index";
 }
+@model UserViewModel
+<h1 class="text-center">Hoşgeldin @User.Identity!.Name</h1> <!-- kullanıcı hoşgeldi mesajı. bu mesajı sadece üyeler görebilir authorization var identity tarafından yapıldı program cs te login logout verdik.--> 
 
-<h1>Hoşgeldin @User.Identity!.Name</h1> <!-- kullanıcı hoşgeldi mesajı. bu mesajı sadece üyeler görebilir authorization var identity tarafından yapıldı program cs te login logout verdik.--> 
+<div class="row">
+    <div class="col align-self-center">
+        <div class="col-sm-auto">
+            <user-picture-thumbnail class="img-thumbnail rounded mx-auto d-block" style="object-fit:cover;width:250px;height:300px" picture-url="@Model.PictureUrl"></user-picture-thumbnail>
+        </div>
+    </div>
+</div>
 
+<div class="row">
+    
+    <div class="col-md-6 offset-md-3">
+        <h1>Kullanıcı Bilgileri</h1>
+        <table class="table">
+            <thead>
+                <tr>
+@*                     <th>Kullanıcı Resmi</th> *@
+                    <th>Kullanıcı Adı</th>
+                    <th>Kullancı Email</th>
+                    <th>Kullanıcı Telefon</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+@*                     <td>
+                        <user-picture-thumbnail class="img-thumbnail rounded mx-auto d-block" style="object-fit:cover;width:30px" picture-url="@Model.PictureUrl"></user-picture-thumbnail>
+                    </td> *@
+                    <td>@Model.UserName</td>
+                    <td>@Model.Email</td>
+                    <td>@Model.PhoneNumber</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

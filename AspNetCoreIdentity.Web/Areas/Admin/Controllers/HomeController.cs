@@ -29,19 +29,19 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
 
         public async Task<IActionResult> UserList() //kullanıcıları listeleyeceğimiz metod get metodu.
         {
-            // var userList = await _userManager.Users.ToListAsync(); //usermanagerdeki userları listele
+            var userList = await _userManager.Users.ToListAsync(); //usermanagerdeki userları listele
 
-            //var userViewModelList = userList.Select(x => new UserViewModel() //admin kullanıcının göreceği user bilgileri userlistten tek tek seç mapleme yap
-            //{
-            //    Id = x.Id,
-            //    Name = x.UserName,
-            //    Email = x.Email
-            //}).ToList();
-            //return View(userViewModelList);
+            var userViewModelList = userList.Select(x => new UserViewModel() //admin kullanıcının göreceği user bilgileri userlistten tek tek seç mapleme yap
+            {
+                Id = x.Id,
+                Name = x.UserName,
+                Email = x.Email
+            }).ToList();
+            return View(userViewModelList);
 
 
             //pagination yapan method ÇALIŞTI LANN
-            return View(await _pagination.UserList(_userManager, 1, 4));
+            //return View(await _pagination.UserList(_userManager, 1, 4));
             
         }
 
