@@ -8,5 +8,8 @@ namespace AspNetCoreIdentity.Web.ViewModels
         [Required(ErrorMessage = "Email alanı boş bırakılamaz!")]
         [Display(Name = "Email :")]
         public string Email { get; set; } = null!;
+
+        [Display(Name = "Mesaj :")]
+        public string Message { get; set; } = null!;
     }
 }

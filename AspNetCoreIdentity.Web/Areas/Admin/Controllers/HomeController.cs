@@ -1,6 +1,7 @@
 ﻿using AspNetCoreIdentity.Web.Areas.Admin.Models;
 using AspNetCoreIdentity.Web.Models;
 using AspNetCoreIdentity.Web.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
 {
     //bu controllerın hangi area aşt olduğun belrt.
     [Area("Admin")]
+    [Authorize(Roles ="admin")]
     public class HomeController : Controller
     {
         private readonly UserManager<AppUser> _userManager; //Appuser listeleyeceğimiz için burada readonly tanımladık constr. vericez
@@ -35,7 +37,7 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
             {
                 Id = x.Id,
                 Name = x.UserName,
-                Email = x.Email
+                Email = x.Email,
             }).ToList();
             return View(userViewModelList);
 

@@ -182,5 +182,17 @@ namespace AspNetCoreIdentity.Web.Controllers
             };
             return View(userEditViewModel); //dönüş tipi html bizden viewmodel bekliyor!!!
         }
+
+
+        //access denied sayfasını bütün üyeler görebileceği için memberda yaptık.
+        public async Task<IActionResult> AccessDenied(string ReturnUrl)
+        {
+            //bu sayfayı program cs te belirtmen lazım AccessDenied sayfası olduğunu programa tanıtman gerke
+
+            string message = string.Empty;
+            message = "Bu sayfaya erişmeye yetkiniz yoktur ,yetki almak için yöneticinizle görüşebilirsiniz.";
+            ViewBag.message = message;
+            return View();
+        }
     }
 }

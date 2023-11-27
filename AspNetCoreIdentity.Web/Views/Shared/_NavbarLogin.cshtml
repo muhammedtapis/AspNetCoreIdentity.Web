@@ -1,4 +1,5 @@
-﻿
+﻿@using System.Security.Claims;
+
 @if (User.Identity!.IsAuthenticated)
 { //eğer ki login olursa bu navbar gözükecek
     <ul class="navbar-nav me-0">
@@ -10,6 +11,13 @@
                 <li><a class="dropdown-item" asp-controller="Member" asp-action="Index">Profil</a></li>
                 <li><a class="dropdown-item" asp-controller="Member" asp-action="PasswordChange">Şifre Değiştir</a></li>
                 <li><a class="dropdown-item" asp-controller="Member" asp-action="UserEdit">Kullanıcı Güncelle</a></li>
+                <!--aşağıda c# kodu yazacağız claimler ile kullanıcıların rollerini erişip navbarda yazacağız, gelen claim role kontrolü ardından rol tipi kontrolu.-->
+                @{
+                    if(User.HasClaim(x => x.Type == ClaimTypes.Role && x.Value == "admin"))
+                    {
+                        <li><a class="dropdown-item" asp-area="Admin"asp-controller="Home" asp-action="Index">Admin</a></li>
+                    }
+                }
                 <li><a class="dropdown-item" asp-route-returnurl="/Home/Index" asp-controller="Member" asp-action="LogOut">Çıkış Yap</a></li>
             </ul>
         </li>

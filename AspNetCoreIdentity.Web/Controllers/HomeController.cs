@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using NuGet.Common;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Policy;
+using System.Web;
 
 namespace AspNetCoreIdentity.Web.Controllers
 {
@@ -165,9 +167,14 @@ namespace AspNetCoreIdentity.Web.Controllers
             //https://localhost:7188?userId=12341&token=lakjbskahbsdiadjlnaksd  //token göndermemizin sebebi gönderilen bu şifre sıfırlama linkine geçerlilik süresi  vericez
 
             //email service
+            var httpUtilityEncoded = HttpUtility.UrlEncode(request.Message);
+            var textlink = @$"https://wa.me/905469334273/?text={httpUtilityEncoded}"; //mesajını whatsappa ekliyip sohbete geçiyo
+            var numaram = "https://wa.me/905469334273";
+            //await _emailService.SendResetPasswordEmailList(request.Message,numaram, hasUser.Email!);
+
 
             await _emailService.SendResetPasswordEmail(passwordResetLink!,hasUser.Email!);
-
+            
             TempData["SuccessMessage"] = "Şifre sıfırlama bağlantısı e-posta adresinize gönderilmiştir";
 
             return RedirectToAction(nameof(ForgetPassword)); //return view yaparsak göndere bastıktan sonra sayfayı yenilerse o maili tekrar göndericek o yüzden HttpGet ForgetPAssword gönderdik.

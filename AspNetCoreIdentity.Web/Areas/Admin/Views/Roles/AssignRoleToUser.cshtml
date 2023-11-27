@@ -1,0 +1,34 @@
+﻿
+@{
+    ViewData["Title"] = "AssignRoleToUser";
+}
+@model List<AdminModel.AssignRoleToUserViewModel>
+
+<h1>AssignRoleToUser</h1>
+
+<!--Burada rol atama yapabilmek için bu sayfaya rolleri göndermemiz gerekiyor önce bu sebeple ViewModel e ihtiyacımız var-->
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h2>Rol Atama</h2>
+        <form asp-action="AssignRoleToUser" asp-route-userId="@ViewBag.userId" method="post"> <!--userid bilgisini post metoduna yolladık-->
+            @for(int i = 0; i<Model.Count; i++)
+            {
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" asp-for="@Model[i].Exist">
+                    <label class="form-check-label" for="exampleCheck1">@Model[i].Name</label>
+                    <!--gizli alanlar tanımlıycaz amaç bu verinin roleName ini backende göndermek kullanıcı butona bastığında backende gelmesi için böyle tanımlamamız lazım-->
+                    <input type="hidden" asp-for="@Model[i].Name">
+                    <input type="hidden" asp-for="@Model[i].Id">
+                </div>
+            }
+            <div class="form-group mt-3">
+                <input type="submit" value="Rol Ata" class="btn btn-primary"/>
+            </div>
+        </form>
+        <div class="mt-3">
+            <a class="btn btn-secondary" asp-controller="Home" asp-action="UserList">Kullanıcı Listesine Geri Dön</a>
+        </div>
+    </div>
+
+</div>
+

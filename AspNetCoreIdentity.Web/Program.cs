@@ -66,7 +66,9 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.LoginPath = new PathString("/Home/SignIn");   //giriþin yapýldýðý yer Identity buradan üyelerin girip giremeyeceði yerleri anlýyo girmesini istemediðimiz controllerlara ya da sayfalara [Authorize] yazýyoruz.
     options.LogoutPath = new PathString("/Member/LogOut");  //çýkýþýn yapýldýðý yeri belirtiyoruz. yönlendirileceði sayfayý navbarLogin de verdik
-    
+
+    options.AccessDeniedPath = new PathString("/Member/AccessDenied"); //yetkisi olmayan kullanýcýlarýn yönlendirildiði sayfayý oluþturup accessdenied path verdik.
+
     options.Cookie = cookieBuilder;
     options.ExpireTimeSpan = TimeSpan.FromDays(60); //cookie ömrü.
     options.SlidingExpiration = true;  //cookienin expiretimespan ini arttýrmaya yarýyor o 60 gün içinde bir kez giriþ yapýlsa bile yine 60 gün uzatýlcak.

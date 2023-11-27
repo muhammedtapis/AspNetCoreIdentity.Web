@@ -1,0 +1,53 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+}
+@model List<AdminModel.RoleViewModel>
+
+<div class="row">
+    <div class="col-md-6 offset-md-2">  <!-- bootstrap gridler üzerinde çalışıyor buradaki col-md-6 12 üzerinden 6 gridi kaplıyo-->
+        <h2>Roller</h2>
+    </div>
+    <div class="col-md-2 offset-md-1">
+        <a class="btn btn-primary" asp-area="Admin" asp-controller="Roles" asp-action="RoleCreate">Rol Ekle</a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        @if (TempData["SuccessMessage"] != null) //eğer ki ViewBag.SuccessMessage boş değilse yada tempdata
+        {
+            <div class="alert alert-info" role="alert">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Rol İsmi</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model) //modelden list geliyo onu foreach ile dönüp yazdırıyoruz.
+                {
+                    <tr>
+                        <td>@item.Id</td>
+                        <td>@item.Name</td>  
+                        <td class="offset-md-2"> <!-- burası önemli tablodaki satıra tıklayıp update silme işlemleri yapcağın zaman bu şekilde buton ekleyebilirsin itemin Id sini alman lazım-->
+                            <a class="btn btn-warning btn-sm" asp-area="Admin" asp-controller="Roles" asp-action="RoleUpdate" asp-route-id="@item.Id" method="get">Rol Güncelle</a>
+                        </td>
+                        <td class="offset-md-3"> 
+                            <!-- burası önemli tablodaki satıra tıklayıp update silme işlemleri yapcağın zaman bu şekilde buton ekleyebilirsin itemin Id sini alman lazım-->
+                            <a class="btn btn-danger btn-sm" asp-area="Admin" asp-controller="Roles" asp-action="RoleDelete" asp-route-id="@item.Id" method="get">Rol Sil</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+

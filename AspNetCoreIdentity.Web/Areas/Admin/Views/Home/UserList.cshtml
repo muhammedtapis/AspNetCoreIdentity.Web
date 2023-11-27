@@ -15,6 +15,8 @@
                 <th>Id</th>
                 <th>Kullanıcı Adı</th>
                 <th>Email</th>
+                <th>Roller</th>
+                <th>Rol İşlemleri</th>
             </tr>
         </thead>
 
@@ -26,6 +28,13 @@
                     <td>@item.Id</td>
                     <td>@item.Name</td>
                     <td>@item.Email</td>
+                    <td>
+                        <user-role-names user-id="@item.Id" class="rounded"></user-role-names>
+                    </td>
+                    <td class="offset-md-3">
+                        <!-- burası önemli tablodaki satıra tıklayıp update silme işlemleri yapcağın zaman bu şekilde buton ekleyebilirsin itemin Id sini alman lazım-->
+                        <a class="btn btn-success btn-sm" asp-controller="Roles" asp-action="AssignRoleToUser" asp-route-id="@item.Id">Rol Ata</a>
+                    </td>
                 </tr>
             }
 
