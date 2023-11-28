@@ -22,7 +22,7 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
             _roleManager = roleManager;
         }
 
-        [Authorize(Roles = "admin,role-action")]
+        [Authorize(Roles = "role-action")]
         public async Task<IActionResult> Index()
         {
             var roles = await _roleManager.Roles.Select(x => new RoleViewModel()

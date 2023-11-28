@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
 using Microsoft.Extensions.FileProviders;
 using NPOI.OpenXmlFormats.Spreadsheet;
+using System.Security.Claims;
 
 namespace AspNetCoreIdentity.Web.Controllers
 {
@@ -16,8 +17,13 @@ namespace AspNetCoreIdentity.Web.Controllers
     {
         //çıkış işlemini signinmanager üzerinden signout işlemiyle yapcaz o yüzden bunu tanımladık.
         private readonly SignInManager<AppUser> _signInManager;
+
         private readonly UserManager<AppUser> _userManager;
         private readonly IFileProvider _fileProvider;
+
+        //ÖEMLİ NOT controller dışında Claims erişebilmek için kullandıımız HttpContext erişimi için aşağıdakini yazıp constructorda geç
+        //PROGRAM.CS tarafında ise servis olarak eklemen lazım yoksa burda çağıramazsın.
+        //private readonly IHttpContextAccessor _contextAccessor; _contextAccessor.HttpContext
         public MemberController(SignInManager<AppUser> signInManager, UserManager<AppUser> userManager, IFileProvider fileProvider)
         {
             _signInManager = signInManager;
@@ -33,17 +39,23 @@ namespace AspNetCoreIdentity.Web.Controllers
         //    return RedirectToAction("Index","Home");
         //}
 
-        public async Task<IActionResult> IndexAsync() 
+        public async Task<IActionResult> IndexAsync()
         {
+            //claims erişim controller sınıfında direkt User üzerinden erişebilirsin ama controller dışında HttpContext.User şeklinde erişebilirsin.
+            var userClaims = User.Claims.ToList();
+
+            //email claimine erişim
+            var emailClaim = User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Email);
+
             //kullanıcı bilgisini alıp gösterme
-            
+
             var currentUser = (await _userManager.FindByNameAsync(User.Identity!.Name!))!; //o anki kllanıcının idsine ait olan isim
-            var userViewModel = new UserViewModel() 
-            { 
-                UserName=currentUser.UserName,
-                Email=currentUser.Email,
-                PhoneNumber=currentUser.PhoneNumber,
-                PictureUrl=currentUser.Picture
+            var userViewModel = new UserViewModel()
+            {
+                UserName = currentUser.UserName,
+                Email = currentUser.Email,
+                PhoneNumber = currentUser.PhoneNumber,
+                PictureUrl = currentUser.Picture
             };
             return View(userViewModel);
         }
@@ -61,35 +73,34 @@ namespace AspNetCoreIdentity.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PasswordChange(PasswordChangeViewModel request) 
+        public async Task<IActionResult> PasswordChange(PasswordChangeViewModel request)
         {
-            if(!ModelState.IsValid) //html sayfasından gelen PasswordChangeViewModel boş değil kontrolü
+            if (!ModelState.IsValid) //html sayfasından gelen PasswordChangeViewModel boş değil kontrolü
             {
                 return View();
             }
 
             var currentUser = (await _userManager.FindByNameAsync(User.Identity!.Name!))!; //authorize attr. geçtiği için bu zaten bir üye bu sebeple Identity Name null olamaz.
-            var checkOldPassword = await _userManager.CheckPasswordAsync(currentUser,request.PasswordOld);
-            
-            if(!checkOldPassword) //eğerki checkoldPassword false dönerse yani yanlış şifreyse
+            var checkOldPassword = await _userManager.CheckPasswordAsync(currentUser, request.PasswordOld);
+
+            if (!checkOldPassword) //eğerki checkoldPassword false dönerse yani yanlış şifreyse
             {
                 ModelState.AddModelError(string.Empty, "Eski şifreniz yanlış");
                 return View();
             }
 
-            var resultChangePassword = await _userManager.ChangePasswordAsync(currentUser,request.PasswordOld, request.PasswordNew);
+            var resultChangePassword = await _userManager.ChangePasswordAsync(currentUser, request.PasswordOld, request.PasswordNew);
 
-            if(!resultChangePassword.Succeeded) // pşifre değişme işlemi başarılı değilse.
+            if (!resultChangePassword.Succeeded) // pşifre değişme işlemi başarılı değilse.
             {
                 ModelState.AddModelErrorList(resultChangePassword.Errors); //hataları alıp açıklamalarını listeye alıp döner.
                 return View();
             }
 
-
             //COOKIE YENİLEME İŞLEMİ KULLANICINI ÖNEMLİ BİLGİSİ DEĞİŞTİĞİ İÇİN COOKİE YENİLEMEMİZ GEREK Kİ DİĞER OTURUMLAR KAPANSIN
             await _userManager.UpdateSecurityStampAsync(currentUser); //önemli bilgiler değiştiğimiz için security stamp değerini güncelledik bunu en son yaparsan o kullanıcıya erişemezsin.veri gözükmez
             await _signInManager.SignOutAsync();//çıkış yaptırdık
-            await _signInManager.PasswordSignInAsync(currentUser,request.PasswordNew,true,false);  // kullanıcı üyelik bilgisi kalıcı olsun = true,lockoutfailure = false sign in fail olursa lock olup olmadığının bilgisi
+            await _signInManager.PasswordSignInAsync(currentUser, request.PasswordNew, true, false);  // kullanıcı üyelik bilgisi kalıcı olsun = true,lockoutfailure = false sign in fail olursa lock olup olmadığının bilgisi
             //program.cs dosyasında securitystamp optionsta timei 1 yapıp denedik diğer sekmelerdeki oturumlar kapanıyor logine yönlendiriyor!
             TempData["SuccessMessage"] = "Şifre değiştirme işlemi başarıyla gerçekleşmiştir.";
             return View();
@@ -98,7 +109,7 @@ namespace AspNetCoreIdentity.Web.Controllers
         public async Task<IActionResult> UserEdit()
         {
             ViewBag.genderList = new SelectList(Enum.GetNames(typeof(Gender))); //model klasöründe oluşturduğumuz enum buraya verildi dropdown list için
-         
+
             //sayfa açıldığında kullanıcının bilgilerinin textlere dolması lazım
             var currentUser = (await _userManager.FindByNameAsync(User.Identity!.Name!))!;
             var userEditViewModel = new UserEditViewModel()
@@ -109,16 +120,14 @@ namespace AspNetCoreIdentity.Web.Controllers
                 BirthDate = currentUser.BirthDate,
                 City = currentUser.City,
                 Gender = currentUser.Gender
-
             };
             return View(userEditViewModel);
         }
 
         [HttpPost]
-
         public async Task<IActionResult> UserEdit(UserEditViewModel request)
         {
-            if(!ModelState.IsValid)//gelen model maplemesi hatalıysa aynı sayfaya yönlendir.
+            if (!ModelState.IsValid)//gelen model maplemesi hatalıysa aynı sayfaya yönlendir.
             {
                 return View();
             }
@@ -134,19 +143,18 @@ namespace AspNetCoreIdentity.Web.Controllers
 
             //fotoğrafı aşağıda vericez bu bilgileri güncelledikten sonra fotoğraf null değilse varsa orada eklicez
 
-            if(request.Picture != null && request.Picture.Length > 0) 
+            if (request.Picture != null && request.Picture.Length > 0)
             {
-                
                 var wwrootFolder = _fileProvider.GetDirectoryContents("wwwroot"); //AspNetCoreIdentity.Web klasöü referransımızdı onun altındaki wwwroot klasörüne erişim sağladık
-                
+
                 var randomFileName = $"{Guid.NewGuid().ToString()}{Path.GetExtension(request.Picture.FileName)}";//  .jpg , .png Random resim dosyası ismi oluşturma  GUID ile
 
                 //fotoğrafa directory yol ismi verdik userpicturesın fiziksel yolu ve randomfilename yolu birleştiriliyor.
                 var newPicturePath = Path.Combine(wwrootFolder!.First(x => x.Name == "userpictures").PhysicalPath!, randomFileName);
 
                 using var stream = new FileStream(newPicturePath, FileMode.Create); //stream aç fotoğrafın yolunu ver ve filemodu oluşturma olarak ver
-                
-                //requestten gelen picture dosyaını kopyala stream at 
+
+                //requestten gelen picture dosyaını kopyala stream at
                 await request.Picture.CopyToAsync(stream);
                 //kopyaladıktan sonra bu dosyanın yolunu da veritabanına yazdırmamız lazım,resim yolu kaydederken klasör yoluyla kaydedilmez dosyanın isimleriyle yazdır.
 
@@ -157,7 +165,7 @@ namespace AspNetCoreIdentity.Web.Controllers
 
             var updateToUserResult = await _userManager.UpdateAsync(currentUser);  //geriye IdentityResult dönüyor daha sonra update işleminin hata varsa bunları ele alcaz.
 
-            if(!updateToUserResult.Succeeded) 
+            if (!updateToUserResult.Succeeded)
             {
                 ModelState.AddModelErrorList(updateToUserResult.Errors); //OVERLOAD EDİLMİŞ METOT hataları gösteriyor.
                 return View();
@@ -167,7 +175,16 @@ namespace AspNetCoreIdentity.Web.Controllers
             await _userManager.UpdateSecurityStampAsync(currentUser);
             //daha sonra önce çıkış sonra tekrar giriş yapıcaz bunun sebebi eski cookienin içindeki bu bilgileri güncellemek.
             await _signInManager.SignOutAsync();
-            await _signInManager.SignInAsync(currentUser, isPersistent: true);
+
+            //birthdate policy eklicez çünkü burada birthdate güncellemesi yapılıyor ama eğer viewmodelden gelen  tarih değeri var ise
+            if (request.BirthDate.HasValue)
+            {
+                await _signInManager.SignInWithClaimsAsync(currentUser, true, new[] { new Claim("birthdate", currentUser.BirthDate!.Value.ToString()) });
+            }
+            else
+            {
+                await _signInManager.SignInAsync(currentUser, isPersistent: true);
+            }
 
             TempData["SuccessMessage"] = "Üye bilgileri güncelleme işlemi başarıyla gerçekleşmiştir.";
             //güncelleme bitince butona bastıktan sonra güncel bilgilerin textlere dolmuş halini dön
@@ -183,7 +200,6 @@ namespace AspNetCoreIdentity.Web.Controllers
             return View(userEditViewModel); //dönüş tipi html bizden viewmodel bekliyor!!!
         }
 
-
         //access denied sayfasını bütün üyeler görebileceği için memberda yaptık.
         public async Task<IActionResult> AccessDenied(string ReturnUrl)
         {
@@ -192,6 +208,35 @@ namespace AspNetCoreIdentity.Web.Controllers
             string message = string.Empty;
             message = "Bu sayfaya erişmeye yetkiniz yoktur ,yetki almak için yöneticinizle görüşebilirsiniz.";
             ViewBag.message = message;
+            return View();
+        }
+
+        //claim listeleme
+        public IActionResult Claims()
+        {
+            //User.Identity.Name değeri User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value(); eşittir aynı işi yapar bu kodlar
+
+            //burda yapılan okumayı framework claim içinden yapıyor
+            var userClaimList = User.Claims.Select(x => new ClaimViewModel()
+            {
+                Issuer = x.Issuer,
+                Type = x.Type,
+                Value = x.Value
+            }).ToList();
+            return View(userClaimList);
+        }
+
+        [Authorize(Policy = "İstanbulPolicy")]
+        [HttpGet]
+        public IActionResult IstanbulPage()
+        {
+            return View();
+        }
+
+        [Authorize(Policy = "ExchangePolicy")]
+        [HttpGet]
+        public IActionResult ExchangePage()
+        {
             return View();
         }
     }

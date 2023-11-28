@@ -11,6 +11,7 @@
                 <li><a class="dropdown-item" asp-controller="Member" asp-action="Index">Profil</a></li>
                 <li><a class="dropdown-item" asp-controller="Member" asp-action="PasswordChange">Şifre Değiştir</a></li>
                 <li><a class="dropdown-item" asp-controller="Member" asp-action="UserEdit">Kullanıcı Güncelle</a></li>
+                <li><a class="dropdown-item" asp-controller="Member" asp-action="Claims">Claims</a></li>
                 <!--aşağıda c# kodu yazacağız claimler ile kullanıcıların rollerini erişip navbarda yazacağız, gelen claim role kontrolü ardından rol tipi kontrolu.-->
                 @{
                     if(User.HasClaim(x => x.Type == ClaimTypes.Role && x.Value == "admin"))
