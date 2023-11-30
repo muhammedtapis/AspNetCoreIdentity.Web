@@ -1,7 +1,7 @@
 ﻿using AspNetCoreIdentity.Web.Extensions;
-using AspNetCoreIdentity.Web.Models;
-using AspNetCoreIdentity.Web.Services;
-using AspNetCoreIdentity.Web.ViewModels;
+using AspNetCoreIdentity.Repository.Models;
+using AspNetCoreIdentity.Service.Services;
+using AspNetCoreIdentity.Core.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
@@ -16,7 +16,7 @@ namespace AspNetCoreIdentity.Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        //private readonly ILogger<HomeController> _logger;
 
         //readonly dememizin sebebi sadece constructorda initialize edilmesin istiyoryz.const ekliyruz
         private readonly UserManager<AppUser> _userManager; //kullanıcı ile ilgili işlem için kullancağımız sınıf. Identity kütüphanesinden geliyo.
@@ -25,9 +25,9 @@ namespace AspNetCoreIdentity.Web.Controllers
 
         private readonly IEmailService _emailService;
 
-        public HomeController(ILogger<HomeController> logger, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailService emailService)
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailService emailService)
         {
-            _logger = logger;
+            //_logger = logger;
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailService;
@@ -92,7 +92,7 @@ namespace AspNetCoreIdentity.Web.Controllers
             }
 
             if (hasUser.BirthDate.HasValue) //kullanıcının giriş yaptığında doğum tarihi olmayabilir onu kontrol et eğer varsa claimle signin yap birthdate claim oluştur ve kullanıcının doğum tarihini ver
-            {   //sadece login olduğunda eklencek bu claim çünkü signin action metodunda bunu membercontrollerda  userEdit e eklicez.
+            {   //sadece login olduğunda eklencek bu claim çünkü signin action metodunda bunu membercontrollerda  userEdit e eklicez. bu claim db de Claims tablosunda tutulmuyor cookiede tutuluyo
                 await _signInManager.SignInWithClaimsAsync(hasUser, request.RememberMe, new[] { new Claim("birthdate", hasUser.BirthDate.Value.ToString()) });
             }
 
@@ -141,7 +141,7 @@ namespace AspNetCoreIdentity.Web.Controllers
 
             //POLICY BASE yetkilendirme kullanıcı üye olursa belirli gün boyunca(10) bu sayfaya erişimi için oluşturcaz ona göre görebilcek
             var exchangeExpireClaim = new Claim("ExchangeExpireDate", DateTime.Now.AddDays(10).ToString()); //kullanıcı oluşturulan tarihten 10 gün sonrasını ver
-            var user = await _userManager.FindByNameAsync(request.Username); //o amki eklenen kullanıcıyı al AddClaimAsync() için gerekiyo parametre olarak
+            var user = await _userManager.FindByNameAsync(request.Username); //o anki eklenen kullanıcıyı al AddClaimAsync() için gerekiyo parametre olarak
 
             var claimResult = await _userManager.AddClaimAsync(user!, exchangeExpireClaim);   //claim nesnesini buraya belirli kullanıcıya ekliyoruz
             if (!claimResult.Succeeded)//claim oluşturma hata alırsa

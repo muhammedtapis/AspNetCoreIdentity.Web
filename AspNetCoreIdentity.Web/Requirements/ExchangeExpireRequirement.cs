@@ -3,7 +3,7 @@ using System.Security.Claims;
 
 namespace AspNetCoreIdentity.Web.Requirements
 {
-    //policy bazlı yetkilendirme için oluşturuldu .
+    //policy bazlı yetkilendirme için oluşturuldu . kullanıcı oluşturulunca 10 gün boyunca Exchange page girebilcek süre geçince giremeyecek.
     public class ExchangeExpireRequirement : IAuthorizationRequirement
     {
         //eğer program.cs ten parametre yollamak istersek buraya da prop ekliyoruz. daha sonra aşağıdaki Handle metodunda requirement üzerinden erişebiliriz.
@@ -12,7 +12,7 @@ namespace AspNetCoreIdentity.Web.Requirements
 
     //handler sınıfı
 
-    public class ExchangeExpirationRequirementHandler : AuthorizationHandler<ExchangeExpireRequirement>
+    public class ExchangeExpireRequirementHandler : AuthorizationHandler<ExchangeExpireRequirement>
     {
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, ExchangeExpireRequirement requirement)
         {

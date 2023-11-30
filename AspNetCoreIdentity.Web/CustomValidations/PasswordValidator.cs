@@ -1,4 +1,4 @@
-﻿using AspNetCoreIdentity.Web.Models;
+﻿using AspNetCoreIdentity.Repository.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace AspNetCoreIdentity.Web.CustomValidations
@@ -14,7 +14,7 @@ namespace AspNetCoreIdentity.Web.CustomValidations
             {
                 errors.Add(new IdentityError() { Code = "PasswordNoContainUsername", Description = "Şifre alanı kullanıcı adı içeremez!" });  //errors listesine ekle bu error varsa
             }
-            if(password!.ToLower().StartsWith("1234")) //1234 ile başlarsa
+            if (password!.ToLower().StartsWith("1234")) //1234 ile başlarsa
             {
                 errors.Add(new IdentityError() { Code = "PasswordNoContain1234", Description = "Şifre alanı ardışık sayı içeremez!" }); //errors listesine ekle bu error varsa
             }
@@ -28,9 +28,6 @@ namespace AspNetCoreIdentity.Web.CustomValidations
             return Task.FromResult(IdentityResult.Success); //eğer bir hata yoksa success.
             //Task.FromResult() içine vermiş olduğunuz methodu task ile wraplar biz yukarda asenkron bi method kullanmadık,bu sebeple wraplememiz gerekti.
             //bu oluşturduğun customValidator Iservice içinde eklemen lazım Identity ye haber vermen gerek.
-
-
-
         }
     }
 }

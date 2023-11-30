@@ -1,10 +1,12 @@
 using AspNetCoreIdentity.Web.Areas.Admin.Models;
 using AspNetCoreIdentity.Web.ClaimProviders;
 using AspNetCoreIdentity.Web.Extensions;
-using AspNetCoreIdentity.Web.Models;
-using AspNetCoreIdentity.Web.OptionsModels;
+using AspNetCoreIdentity.Repository.Models;
+using AspNetCoreIdentity.Core.OptionsModels;
+using AspNetCoreIdentity.Core.PermissionRoot;
 using AspNetCoreIdentity.Web.Requirements;
-using AspNetCoreIdentity.Web.Services;
+using AspNetCoreIdentity.Repository.Seeds;
+using AspNetCoreIdentity.Service.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -18,7 +20,10 @@ builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlCon"), options =>
+    {
+        options.MigrationsAssembly("AspNetCoreIdentity.Repository"); //repository katmanýnda migration oluþacak.
+    });
 });
 
 //aþaðýdaki methodu extension olarak Extension klasöründe tanýmlayacaðoýz.
@@ -65,10 +70,46 @@ builder.Services.AddAuthorization(options =>
         policy.AddRequirements(new ExchangeExpireRequirement());
         //policy.AddRequirements(new ExchangeExpireRequirement() { Age = 31 }); //parametre göndermek istersek bu sýnýfta prop tanýmlayýp burda vercez.
     });
+
+    options.AddPolicy("ViolencePolicy", policy =>
+    {
+        policy.AddRequirements(new ViolenceRequirement() { thresholdAge = 18 });
+        //policy.AddRequirements(new ExchangeExpireRequirement() { Age = 31 }); //parametre göndermek istersek bu sýnýfta prop tanýmlayýp burda vercez.
+    });
+
+    //bu policyde üçüne de sahip olanlar eriþim saðlayabilir !!!!!
+    options.AddPolicy("StockDeleteOrderDeleteAndReadPermissionPolicy", policy =>
+    {
+        policy.RequireClaim("permission", Permission.Stock.Delete); //saðdaki alan string oluþturduðumuz sýnýftan gelio
+        policy.RequireClaim("permission", Permission.Order.Delete);
+        policy.RequireClaim("permission", Permission.Order.Read); //bunlarý ayrý ayrý yazýp bekledik ki hepsine sahip olan bu policynin þartlarý saðlasýn.
+        //policy.REquireClaim progra ayaða kalkýnca oluþturduðumuz claimlerden 3 tanesini burada verdik dikkat edelim burada bir role tanýmlamasý yok .!!!
+    });
+
+    options.AddPolicy("Permission.Order.ReadPolicy", policy =>
+    {
+        policy.RequireClaim("permission", Permission.Order.Read);
+    });
+
+    options.AddPolicy("Permission.Order.DeletePolicy", policy =>
+    {
+        policy.RequireClaim("permission", Permission.Order.Delete);
+    });
+
+    options.AddPolicy("Permission.Stock.DeletePolicy", policy =>
+    {
+        policy.RequireClaim("permission", Permission.Stock.Delete);
+    });
 });
 
 //eðer Iauthorization interface görürsen bu interface karþýlýk benim oluþturduðum sýnýfýn nesne örneðini olþtur.POLICY BASE  yetki için requirementda
-builder.Services.AddScoped<IAuthorizationHandler, ExchangeExpirationRequirementHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, ExchangeExpireRequirementHandler>();
+
+//Policy base 18 yaþ sýnýrý
+builder.Services.AddScoped<IAuthorizationHandler, ViolenceRequirementHandler>();
+
+//service katmanýndaki IMemberService programa tanýtým
+builder.Services.AddScoped<IMemberService, MemberService>();
 
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
@@ -98,6 +139,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddSingleton<IFileProvider>(new PhysicalFileProvider(Directory.GetCurrentDirectory())); //herhangi bir classýn constructorunda IFileprovider verirsen projedeki tüm klasörlere eriþim saðlarsýn.!!!
 
 var app = builder.Build();
+
+//permission seed claim için !! uygulamanoýn bir kez ayaða kalktýðý yer burasý bunun da bi kez auaða kalkmasýný istiyotuz o sebeble burda yazdýk
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
+    await PermissionSeed.Seed(roleManager);  //scopelar bitiði anda roleManager memoryden düþecek.
+}
 
 //referans noktamýz ise içiçnde olduðumuz genel proje klasörü olarak verdilk => Directory.GetCurrentDirectory()
 
