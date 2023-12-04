@@ -111,6 +111,8 @@ builder.Services.AddScoped<IAuthorizationHandler, ViolenceRequirementHandler>();
 //service katmanýndaki IMemberService programa tanýtým
 builder.Services.AddScoped<IMemberService, MemberService>();
 
+builder.Services.AddScoped<IHomeService, HomeService>();
+
 builder.Services.Configure<SecurityStampValidatorOptions>(options =>
 {
     options.ValidationInterval = TimeSpan.FromSeconds(30); //30 dakikada bir security stamp deðeri karþýlaþtýrmasý için konf.

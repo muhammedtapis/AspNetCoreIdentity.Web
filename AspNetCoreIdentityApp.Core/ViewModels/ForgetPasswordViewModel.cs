@@ -9,7 +9,5 @@ namespace AspNetCoreIdentity.Core.ViewModels
         [Display(Name = "Email :")]
         public string Email { get; set; } = null!;
 
-        [Display(Name = "Mesaj :")]
-        public string Message { get; set; } = null!;
     }
 }

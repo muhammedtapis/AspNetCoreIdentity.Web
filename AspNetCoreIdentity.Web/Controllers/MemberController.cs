@@ -138,6 +138,7 @@ namespace AspNetCoreIdentity.Web.Controllers
         {
             //User.Identity.Name değeri User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.Name).Value(); eşittir aynı işi yapar bu kodlar
             return View(_memberService.GetClaims(User));  //burası önemli User verdik bu bi claimprincioal nesnesi claimlere ulaşmak için kullanıyoruz.
+
         }
 
         [Authorize(Policy = "İstanbulPolicy")]
