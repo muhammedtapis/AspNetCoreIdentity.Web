@@ -1,6 +1,6 @@
 ﻿using AspNetCoreIdentity.Web.Areas.Admin.Models;
-using AspNetCoreIdentity.Web.Models;
-using AspNetCoreIdentity.Web.Services;
+using AspNetCoreIdentity.Repository.Models;
+using AspNetCoreIdentity.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,12 +10,13 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
 {
     //bu controllerın hangi area aşt olduğun belrt.
     [Area("Admin")]
-    [Authorize(Roles ="admin")]
+    [Authorize(Roles = "admin")]
     public class HomeController : Controller
     {
         private readonly UserManager<AppUser> _userManager; //Appuser listeleyeceğimiz için burada readonly tanımladık constr. vericez
 
         private readonly IPagination _pagination;
+
         public HomeController(UserManager<AppUser> userManager, IPagination pagination)
         {
             _userManager = userManager;
@@ -26,8 +27,6 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
         {
             return View();
         }
-
-
 
         public async Task<IActionResult> UserList() //kullanıcıları listeleyeceğimiz metod get metodu.
         {
@@ -41,20 +40,14 @@ namespace AspNetCoreIdentity.Web.Areas.Admin.Controllers
             }).ToList();
             return View(userViewModelList);
 
-
             //pagination yapan method ÇALIŞTI LANN
             //return View(await _pagination.UserList(_userManager, 1, 4));
-            
         }
 
         //[HttpPost]
 
         //public async Task<IActionResult> UserList(UserViewModel request)
         //{
-
         //}
-
-
-
-    } 
+    }
 }

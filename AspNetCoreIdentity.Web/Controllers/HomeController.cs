@@ -1,7 +1,7 @@
 ﻿using AspNetCoreIdentity.Web.Extensions;
-using AspNetCoreIdentity.Web.Models;
-using AspNetCoreIdentity.Web.Services;
-using AspNetCoreIdentity.Web.ViewModels;
+using AspNetCoreIdentity.Repository.Models;
+using AspNetCoreIdentity.Service.Services;
+using AspNetCoreIdentity.Core.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
@@ -11,6 +11,8 @@ using System.Diagnostics;
 using System.Security.Claims;
 using System.Security.Policy;
 using System.Web;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 
 namespace AspNetCoreIdentity.Web.Controllers
 {
@@ -19,18 +21,23 @@ namespace AspNetCoreIdentity.Web.Controllers
         private readonly ILogger<HomeController> _logger;
 
         //readonly dememizin sebebi sadece constructorda initialize edilmesin istiyoryz.const ekliyruz
-        private readonly UserManager<AppUser> _userManager; //kullanıcı ile ilgili işlem için kullancağımız sınıf. Identity kütüphanesinden geliyo.
+        //private readonly UserManager<AppUser> _userManager; //kullanıcı ile ilgili işlem için kullancağımız sınıf. Identity kütüphanesinden geliyo.
 
-        private readonly SignInManager<AppUser> _signInManager;  //kullanıcı giriş için eklendi bu.
+        //private readonly SignInManager<AppUser> _signInManager;  //kullanıcı giriş için eklendi bu.
 
-        private readonly IEmailService _emailService;
+        //private readonly IEmailService _emailService;
 
-        public HomeController(ILogger<HomeController> logger, UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailService emailService)
+        private readonly IHomeService _homeService;
+        private readonly SignInManager<AppUser> _signInManager;
+
+        public HomeController(ILogger<HomeController> logger, /*UserManager<AppUser> userManager, SignInManager<AppUser> signInManager ,IEmailService emailService,*/ IHomeService homeService, SignInManager<AppUser> signInManager)
         {
             _logger = logger;
-            _userManager = userManager;
+            //_userManager = userManager;
+            //_signInManager = signInManager;
+            //_emailService = emailService;
+            _homeService = homeService;
             _signInManager = signInManager;
-            _emailService = emailService;
         }
 
         public IActionResult Index()
@@ -67,33 +74,35 @@ namespace AspNetCoreIdentity.Web.Controllers
 
             returnUrl = returnUrl ?? Url.Action("Index", "Home");  //eğer gelen değer null ise Url.Action() methodu çalışacak homecontroller anasayfaya gidecek.
 
-            var hasUser = await _userManager.FindByEmailAsync(request.Email!); //ViewModelden gelen modelin emaili varsa
-                                                                               //eğer bu mailden databasede birden fazla varsa exception atıyor!!!!!!!!
+            var hasUser = await _homeService.HasUserSignInAsync(request);
 
             if (hasUser == null)
             {
                 ModelState.AddModelError(string.Empty, "Email veya şifre yanlış"); //email kontrolu yaptık ama bu mesajı yazdırdık kötü kullanıcıya önlem için bu mesaj
                 return View();
             }
+
+            var signResult = await _homeService.EditUserAsync(request, hasUser);
+
             //ek claim cookie oluşturma login olduğunda çalışacak şiddetli videoların erişimi !
 
-            var signInResult = await _signInManager.PasswordSignInAsync(hasUser, request.Password!, request.RememberMe, true); //parantezin içindeki en sağdaki false yanlış girişlerde sistemi kitleme oluyo
-                                                                                                                               //kullanıcı 5 defa yanlış girse sistem kitleniyo bunu şimdilik false yaptık sonra trueçeviridk.
-            if (signInResult.IsLockedOut) //lock olursa bura çalışcak
+            //var signInResult = await _signInManager.PasswordSignInAsync(hasUser, request.Password!, request.RememberMe, true); //parantezin içindeki en sağdaki false yanlış girişlerde sistemi kitleme oluyo
+            //kullanıcı 5 defa yanlış girse sistem kitleniyo bunu şimdilik false yaptık sonra trueçeviridk.
+            if (signResult.IsLockedOut) //lock olursa bura çalışcak
             {
                 ModelState.AddModelErrorList(new List<string>() { "3ten fazla yanlış giriş yaptınız,3 dakika boyunca giriş yapamazsınız" });
                 return View();//bunu burda yazmamızın sebebi email veya şifre yanlış hata mesajıyl aynı yerde olmasını istememiz,buraya girince burdaki view göndercek
             }
 
-            if (!signInResult.Succeeded) //eğer giriş başarısız ise
+            if (!signResult.Succeeded) //eğer giriş başarısız ise
             {
-                ModelState.AddModelErrorList(new List<string>() { $"Email veya şifre yanlış", $"Başarısız giriş sayısı = {await _userManager.GetAccessFailedCountAsync(hasUser)}" });//başarısız giriş sayısını al karşılaştır
+                ModelState.AddModelErrorList(new List<string>() { $"Email veya şifre yanlış", $"Başarısız giriş sayısı = {await _homeService.AccessFailedAccountAsync(hasUser)}" });//başarısız giriş sayısını al karşılaştır
                 return View();
             }
 
             if (hasUser.BirthDate.HasValue) //kullanıcının giriş yaptığında doğum tarihi olmayabilir onu kontrol et eğer varsa claimle signin yap birthdate claim oluştur ve kullanıcının doğum tarihini ver
-            {   //sadece login olduğunda eklencek bu claim çünkü signin action metodunda bunu membercontrollerda  userEdit e eklicez.
-                await _signInManager.SignInWithClaimsAsync(hasUser, request.RememberMe, new[] { new Claim("birthdate", hasUser.BirthDate.Value.ToString()) });
+            {   //sadece login olduğunda eklencek bu claim çünkü signin action metodunda bunu membercontrollerda  userEdit e eklicez. bu claim db de Claims tablosunda tutulmuyor cookiede tutuluyo
+                await _homeService.SignInBirthDateClaimAsync(hasUser, request);
             }
 
             return Redirect(returnUrl!);
@@ -113,42 +122,21 @@ namespace AspNetCoreIdentity.Web.Controllers
                 return View();
             }
 
-            //hash => password123121* => kajhsgdakhjdbaksjncakl  hashlenmiş data geri alamazsınız.
-            // encrypt  => paswrd123412 => aksjdnbaksjdna  bu datayıgeri döndürebilirsiniz encrypt edilen decrypt edeilirsiniz.
-            //hash algoritmaları MD5,SHA,512... istersek Identity hash algoritmasını değiştirebiliriz ama yapmıycaz defaultu güçlü bi algoritma
-            //dbde hata varsa aynı kullanıcı adı vs bu identityREsult ile alıyoruz.
-            var identityResult = await _userManager.CreateAsync(new AppUser() { UserName = request.Username, PhoneNumber = request.Phone, Email = request.Email }
-             , request.PasswordConfirm!);
+            var (isSuccess, errors) = await _homeService.CreateUserAsync(request);
 
-            if (!identityResult.Succeeded)
+            if (!isSuccess) //başarısız ise
             {
-                ModelState.AddModelErrorList(identityResult.Errors.Select(x => x.Description).ToList());
-                //bi üst satırdaki extension alttaki foreachın yaptığı işi yapıyor hataları tek tekmodelstate ekliyor
-                //foreach (IdentityError item in identityResult.Errors)
-                //{
-                //    ModelState.AddModelError(string.Empty, item.Description);  //string.empty yani soldaki kısım bu hatanın nereye ait olduğunu nerde görünmesini istediiğini belirttiğin yer
-                //                                                               //item.description ise hatanın mesajı buradaki item identityResult.Errors dan gelior.
-                //}
+                ModelState.AddModelErrorList(errors!); //OVERLOAD EDİLMİŞ METOT hataları gösteriyor.
                 return View();
-                //hata alırsak textboxların doldurulduğu view gösterilcek. almazsak redirecttoaction yaptık yukarda
             }
 
-            //ViewBag.SuccessMessage = "Üyelik kayıt işlemi başarıyla gerçekleştirilmiştir."; //signuphtml de göstercez
-            //return View(); //aynı sayfaya geri döm ilk seçenekte kayıttan sonra aynı sayfaya geliyor textboxlar aynı bilgilerle dolu boş değil. bnda viewbag kullandık
+            ////ViewBag.SuccessMessage = "Üyelik kayıt işlemi başarıyla gerçekleştirilmiştir."; //signuphtml de göstercez
+            ////return View(); //aynı sayfaya geri döm ilk seçenekte kayıttan sonra aynı sayfaya geliyor textboxlar aynı bilgilerle dolu boş değil. bnda viewbag kullandık
 
-            //ikinci seçenekte SignUp get methoduna gönderirsek textboxlar boş olarak gelir fakat ViewBag oraya gidemez o yğzden onun yerine TempData kullancaz.
+            ////ikinci seçenekte SignUp get methoduna gönderirsek textboxlar boş olarak gelir fakat ViewBag oraya gidemez o yğzden onun yerine TempData kullancaz.
+
             TempData["SuccessMessage"] = "Üyelik kayıt işlemi başarıyla gerçekleştirilmiştir.";
 
-            //POLICY BASE yetkilendirme kullanıcı üye olursa belirli gün boyunca(10) bu sayfaya erişimi için oluşturcaz ona göre görebilcek
-            var exchangeExpireClaim = new Claim("ExchangeExpireDate", DateTime.Now.AddDays(10).ToString()); //kullanıcı oluşturulan tarihten 10 gün sonrasını ver
-            var user = await _userManager.FindByNameAsync(request.Username); //o amki eklenen kullanıcıyı al AddClaimAsync() için gerekiyo parametre olarak
-
-            var claimResult = await _userManager.AddClaimAsync(user!, exchangeExpireClaim);   //claim nesnesini buraya belirli kullanıcıya ekliyoruz
-            if (!claimResult.Succeeded)//claim oluşturma hata alırsa
-            {
-                ModelState.AddModelErrorList(claimResult.Errors.Select(x => x.Description).ToList());
-                return View();
-            }
             return RedirectToAction(nameof(HomeController.SignIn)); //signin get methoduna yönlendir giriş sayfasına.
         }
 
@@ -161,7 +149,7 @@ namespace AspNetCoreIdentity.Web.Controllers
         public async Task<IActionResult> ForgetPassword(ForgetPasswordViewModel request)
         {
             //user emaili  var mı  kontrolü
-            var hasUser = await _userManager.FindByEmailAsync(request.Email!);
+            var hasUser = await _homeService.HasUserForgetPasswordAsync(request);
 
             if (hasUser == null)
             {
@@ -169,20 +157,8 @@ namespace AspNetCoreIdentity.Web.Controllers
                 return View(); //requestler durum tutmazlar bu sebeple return view dedik return direct deseydik modelStatedeki veriyi kaybederdik temp datayla taşımak zorunda kalırdık.
             }
 
-            string passwordResetToken = await _userManager.GeneratePasswordResetTokenAsync(hasUser); //token oluştur hasUser kullanıcısı için.
-
-            var passwordResetLink = Url.Action("ResetPassword", "Home", new { userId = hasUser.Id, Token = passwordResetToken }
-            , HttpContext.Request.Scheme);                        //url oluşturma birinci kısım action ikinci kısım controller
-            //örnek link göndercez
-            //https://localhost:7188?userId=12341&token=lakjbskahbsdiadjlnaksd  //token göndermemizin sebebi gönderilen bu şifre sıfırlama linkine geçerlilik süresi  vericez
-
-            //email service
-            var httpUtilityEncoded = HttpUtility.UrlEncode(request.Message);
-            var textlink = @$"https://wa.me/905469334273/?text={httpUtilityEncoded}"; //mesajını whatsappa ekliyip sohbete geçiyo
-            var numaram = "https://wa.me/905469334273";
-            //await _emailService.SendResetPasswordEmailList(request.Message,numaram, hasUser.Email!);
-
-            await _emailService.SendResetPasswordEmail(passwordResetLink!, hasUser.Email!);
+            //şifre unuttum maili gönderme servisi
+            await _homeService.ForgetPassword(this.Url, this.HttpContext, hasUser); // controller dışında url ve httpcontext erişimi olmadığı çin parametre yolladık.
 
             TempData["SuccessMessage"] = "Şifre sıfırlama bağlantısı e-posta adresinize gönderilmiştir";
 
@@ -210,15 +186,16 @@ namespace AspNetCoreIdentity.Web.Controllers
                 //ileriki derslerde bu exceptionu Error.cshtml sayfasına yönlendircez
             }
 
-            var hasUser = await _userManager.FindByIdAsync(userId.ToString()!); //yukarıdaki null checkten geçtikleri için null olamazlar zaten o yğzden ! ile belirttik.
-
+            //var hasUser = await _userManager.FindByIdAsync(userId.ToString()!); //yukarıdaki null checkten geçtikleri için null olamazlar zaten o yğzden ! ile belirttik.
+            var hasUser = await _homeService.HasUserFindByIdAsync(userId.ToString()!);
             if (hasUser == null)
             {
                 ModelState.AddModelError(string.Empty, "Kullanıcı bulunamamıştır");
                 return View();
             }
 
-            var result = await _userManager.ResetPasswordAsync(hasUser, token.ToString()!, request.Password!); //bu işlemle kullanıcının şifresi yenileniyor.ResetPassword sayfasından alınan bilgilerle.
+            //bu işlemle kullanıcının şifresi yenileniyor.ResetPassword sayfasından alınan bilgilerle.
+            var (result, errors) = await _homeService.ResetPassword(hasUser, token.ToString()!, request.Password!);
 
             if (result.Succeeded)
             {
@@ -226,15 +203,39 @@ namespace AspNetCoreIdentity.Web.Controllers
             }
             else
             {
-                ModelState.AddModelErrorList(result.Errors.Select(x => x.Description).ToList());//şifre yenilemede hata varsa onu göstericez.
+                ModelState.AddModelErrorList(errors);//şifre yenilemede hata varsa onu göstericez.
             }
             return View();
+        }
+
+        public async Task<IActionResult> ExternalResponse(string returnUrl = "/")
+        {
+            var (isSuccess, errors) = (await _homeService.ExternalResponse(ModelState));
+            if (!isSuccess)
+            {
+                ModelState.AddModelErrorList(errors); //responsedan gelen Identity errors modele eklendi
+                List<string> errorList = ModelState.Values.SelectMany(x => x.Errors).Select(y => y.ErrorMessage).ToList(); ///hatalar listeye atıldı error sayfasında karşılıcaz.
+                return View("GoogleAuthenticationError", errorList); //hatalar error sayfasına gönderildi.
+            }
+            return RedirectToAction(returnUrl);
+        }
+
+        public IActionResult GoogleLogin(string returnUrl)
+        {
+            var redirectUrl = Url.Action("ExternalResponse", "Home", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+            return new ChallengeResult("Google", properties);
         }
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        public IActionResult GoogleAuthenticationError()
+        {
+            return View();
         }
     }
 }

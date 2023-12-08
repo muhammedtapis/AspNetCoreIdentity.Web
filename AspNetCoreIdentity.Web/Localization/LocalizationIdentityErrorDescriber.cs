@@ -2,7 +2,7 @@
 
 namespace AspNetCoreIdentity.Web.Localization
 {
-    public class LocalizationIdentityErrorDescriber:IdentityErrorDescriber
+    public class LocalizationIdentityErrorDescriber : IdentityErrorDescriber
     {
         public override IdentityError DuplicateUserName(string userName)
         {
@@ -30,7 +30,6 @@ namespace AspNetCoreIdentity.Web.Localization
                 Code = "PasswordTooShort",
                 Description = $" Şifre en az  6 karakter olmalıdır."
             };
-            
         }
     }
 }

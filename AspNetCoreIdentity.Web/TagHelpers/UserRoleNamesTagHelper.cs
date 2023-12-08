@@ -1,13 +1,13 @@
-﻿using AspNetCoreIdentity.Web.Models;
+﻿using AspNetCoreIdentity.Repository.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Razor.TagHelpers;
 using System.Text;
 
 namespace AspNetCoreIdentity.Web.TagHelpers
 {
-    //b taghelperi oluşturmamızın sebebi html dosyasında backend kodu yazıp kirletmemek 
+    //b taghelperi oluşturmamızın sebebi html dosyasında backend kodu yazıp kirletmemek
     //taghelperi farklı bir AReada kullancağın için o areadaki viewimports dosyasında yoluyla eklemen gerek yoksa UserList.html sayfasında göremezsin
-    public class UserRoleNamesTagHelper:TagHelper
+    public class UserRoleNamesTagHelper : TagHelper
     {
         public string userId { get; set; } = null!;
 
@@ -23,7 +23,7 @@ namespace AspNetCoreIdentity.Web.TagHelpers
             var user = await _usermanager.FindByIdAsync(userId); //kullanıcıyı aldık
             var userRoles = await _usermanager.GetRolesAsync(user!); //kullanıcınn rollerini aldık
 
-            var stringBuilder = new StringBuilder(); //string builder ile yanyana ekleyeceğiz o yüzden oluşturduk 
+            var stringBuilder = new StringBuilder(); //string builder ile yanyana ekleyeceğiz o yüzden oluşturduk
 
             userRoles.ToList().ForEach(x => //rolleri tek tek dönüp badge olarak ekledik yanyana
             {

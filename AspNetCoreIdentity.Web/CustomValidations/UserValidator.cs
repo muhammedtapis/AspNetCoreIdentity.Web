@@ -1,4 +1,4 @@
-﻿using AspNetCoreIdentity.Web.Models;
+﻿using AspNetCoreIdentity.Repository.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace AspNetCoreIdentity.Web.CustomValidations
@@ -10,9 +10,9 @@ namespace AspNetCoreIdentity.Web.CustomValidations
             //custom user validator
             var errors = new List<IdentityError>();
 
-            var isDigit = int.TryParse(user.UserName![0].ToString(),out _); //ikinci parametresi bize sayısal karakter varsa o değişkene atıyor ama biz kullanmıcaz bunu (out _) ile belirtik
+            var isDigit = int.TryParse(user.UserName![0].ToString(), out _); //ikinci parametresi bize sayısal karakter varsa o değişkene atıyor ama biz kullanmıcaz bunu (out _) ile belirtik
                                                                              //usernamein ilk karakterinin int olup olmadığı kontrolü
-            if (isDigit==true)
+            if (isDigit == true)
             {
                 errors.Add(new IdentityError()
                 {
@@ -28,8 +28,6 @@ namespace AspNetCoreIdentity.Web.CustomValidations
             }
 
             return Task.FromResult(IdentityResult.Success); //eğer bir hata yoksa success.
-
         }
-
     }
 }
