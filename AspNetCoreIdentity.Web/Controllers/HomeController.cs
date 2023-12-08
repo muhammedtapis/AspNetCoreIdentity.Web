@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Security.Policy;
 using System.Web;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 
 namespace AspNetCoreIdentity.Web.Controllers
 {
@@ -27,15 +28,16 @@ namespace AspNetCoreIdentity.Web.Controllers
         //private readonly IEmailService _emailService;
 
         private readonly IHomeService _homeService;
+        private readonly SignInManager<AppUser> _signInManager;
 
-
-        public HomeController(ILogger<HomeController> logger, /*UserManager<AppUser> userManager, SignInManager<AppUser> signInManager ,IEmailService emailService,*/ IHomeService homeService)
+        public HomeController(ILogger<HomeController> logger, /*UserManager<AppUser> userManager, SignInManager<AppUser> signInManager ,IEmailService emailService,*/ IHomeService homeService, SignInManager<AppUser> signInManager)
         {
             _logger = logger;
             //_userManager = userManager;
             //_signInManager = signInManager;
             //_emailService = emailService;
             _homeService = homeService;
+            _signInManager = signInManager;
         }
 
         public IActionResult Index()
@@ -80,12 +82,12 @@ namespace AspNetCoreIdentity.Web.Controllers
                 return View();
             }
 
-            var signResult = await _homeService.EditUserAsync(request,hasUser);
+            var signResult = await _homeService.EditUserAsync(request, hasUser);
 
             //ek claim cookie oluşturma login olduğunda çalışacak şiddetli videoların erişimi !
 
             //var signInResult = await _signInManager.PasswordSignInAsync(hasUser, request.Password!, request.RememberMe, true); //parantezin içindeki en sağdaki false yanlış girişlerde sistemi kitleme oluyo
-                                                                                                                               //kullanıcı 5 defa yanlış girse sistem kitleniyo bunu şimdilik false yaptık sonra trueçeviridk.
+            //kullanıcı 5 defa yanlış girse sistem kitleniyo bunu şimdilik false yaptık sonra trueçeviridk.
             if (signResult.IsLockedOut) //lock olursa bura çalışcak
             {
                 ModelState.AddModelErrorList(new List<string>() { "3ten fazla yanlış giriş yaptınız,3 dakika boyunca giriş yapamazsınız" });
@@ -100,10 +102,8 @@ namespace AspNetCoreIdentity.Web.Controllers
 
             if (hasUser.BirthDate.HasValue) //kullanıcının giriş yaptığında doğum tarihi olmayabilir onu kontrol et eğer varsa claimle signin yap birthdate claim oluştur ve kullanıcının doğum tarihini ver
             {   //sadece login olduğunda eklencek bu claim çünkü signin action metodunda bunu membercontrollerda  userEdit e eklicez. bu claim db de Claims tablosunda tutulmuyor cookiede tutuluyo
-                await _homeService.SignInBirthDateClaimAsync(hasUser,request);
+                await _homeService.SignInBirthDateClaimAsync(hasUser, request);
             }
-
-
 
             return Redirect(returnUrl!);
 
@@ -122,7 +122,7 @@ namespace AspNetCoreIdentity.Web.Controllers
                 return View();
             }
 
-            var (isSuccess,errors) = await _homeService.CreateUserAsync(request);
+            var (isSuccess, errors) = await _homeService.CreateUserAsync(request);
 
             if (!isSuccess) //başarısız ise
             {
@@ -138,7 +138,6 @@ namespace AspNetCoreIdentity.Web.Controllers
             TempData["SuccessMessage"] = "Üyelik kayıt işlemi başarıyla gerçekleştirilmiştir.";
 
             return RedirectToAction(nameof(HomeController.SignIn)); //signin get methoduna yönlendir giriş sayfasına.
-
         }
 
         public IActionResult ForgetPassword()
@@ -157,9 +156,9 @@ namespace AspNetCoreIdentity.Web.Controllers
                 ModelState.AddModelError(string.Empty, "Bu email adresine sahip kullanıcı bulunamamıştır.");
                 return View(); //requestler durum tutmazlar bu sebeple return view dedik return direct deseydik modelStatedeki veriyi kaybederdik temp datayla taşımak zorunda kalırdık.
             }
-            
+
             //şifre unuttum maili gönderme servisi
-            await _homeService.ForgetPassword(this.Url,this.HttpContext,hasUser); // controller dışında url ve httpcontext erişimi olmadığı çin parametre yolladık.
+            await _homeService.ForgetPassword(this.Url, this.HttpContext, hasUser); // controller dışında url ve httpcontext erişimi olmadığı çin parametre yolladık.
 
             TempData["SuccessMessage"] = "Şifre sıfırlama bağlantısı e-posta adresinize gönderilmiştir";
 
@@ -196,7 +195,7 @@ namespace AspNetCoreIdentity.Web.Controllers
             }
 
             //bu işlemle kullanıcının şifresi yenileniyor.ResetPassword sayfasından alınan bilgilerle.
-            var (result,errors) = await _homeService.ResetPassword(hasUser,token.ToString()!, request.Password!);
+            var (result, errors) = await _homeService.ResetPassword(hasUser, token.ToString()!, request.Password!);
 
             if (result.Succeeded)
             {
@@ -209,10 +208,34 @@ namespace AspNetCoreIdentity.Web.Controllers
             return View();
         }
 
+        public async Task<IActionResult> ExternalResponse(string returnUrl = "/")
+        {
+            var (isSuccess, errors) = (await _homeService.ExternalResponse(ModelState));
+            if (!isSuccess)
+            {
+                ModelState.AddModelErrorList(errors); //responsedan gelen Identity errors modele eklendi
+                List<string> errorList = ModelState.Values.SelectMany(x => x.Errors).Select(y => y.ErrorMessage).ToList(); ///hatalar listeye atıldı error sayfasında karşılıcaz.
+                return View("GoogleAuthenticationError", errorList); //hatalar error sayfasına gönderildi.
+            }
+            return RedirectToAction(returnUrl);
+        }
+
+        public IActionResult GoogleLogin(string returnUrl)
+        {
+            var redirectUrl = Url.Action("ExternalResponse", "Home", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+            return new ChallengeResult("Google", properties);
+        }
+
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+        public IActionResult GoogleAuthenticationError()
+        {
+            return View();
         }
     }
 }

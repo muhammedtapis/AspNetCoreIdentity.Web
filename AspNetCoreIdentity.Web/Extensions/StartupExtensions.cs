@@ -23,7 +23,7 @@ namespace AspNetCoreIdentity.Web.Extensions
                 //aşağıdaki options kodlarını yazdığın zaman default server validator hata veriyor
                 ////password validation kuralları
                 options.User.RequireUniqueEmail = true;
-                options.User.AllowedUserNameCharacters = "abcdefghijklmnoprstuvwxyz1234567890_";//username karakterleri
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnoprstuvwxyz1234567890_-";//username karakterleri
 
                 options.Password.RequiredLength = 6; //6 karakter olsun
                 options.Password.RequireNonAlphanumeric = false; //alphanumeric zorunlu değil * ?

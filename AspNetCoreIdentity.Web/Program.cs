@@ -56,6 +56,14 @@ builder.Services.AddScoped<IPagination, Pagination>();
 
 //oluþturduðumuz Claim provider frameworke bildirim
 builder.Services.AddScoped<IClaimsTransformation, UserClaimProvider>();
+
+//google authentication
+builder.Services.AddAuthentication().AddGoogle(options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientID"]!;
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"]!;
+});
+
 //þehir bilgisi üzerinden yetkilendirme yapmak için policy ekleme
 builder.Services.AddAuthorization(options =>
 {

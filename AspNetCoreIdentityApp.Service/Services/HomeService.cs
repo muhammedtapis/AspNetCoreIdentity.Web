@@ -58,7 +58,6 @@ namespace AspNetCoreIdentity.Service.Services
             }
 
             return signInResult;
-
         }
 
         public async Task<AppUser> HasUserSignInAsync(SignInViewModel request)
@@ -76,7 +75,6 @@ namespace AspNetCoreIdentity.Service.Services
         //kullanıcı oluşturma
         public async Task<(bool, IEnumerable<IdentityError>?)> CreateUserAsync(SignUpViewModel request)
         {
-
             ////hash => password123121* => kajhsgdakhjdbaksjncakl  hashlenmiş data geri alamazsınız.
             //// encrypt  => paswrd123412 => aksjdnbaksjdna  bu datayıgeri döndürebilirsiniz encrypt edilen decrypt edeilirsiniz.
             ////hash algoritmaları MD5,SHA,512... istersek Identity hash algoritmasını değiştirebiliriz ama yapmıycaz defaultu güçlü bi algoritma
@@ -110,17 +108,15 @@ namespace AspNetCoreIdentity.Service.Services
             }
 
             return (true, null);
-
-
         }
 
         public async Task<AppUser> HasUserForgetPasswordAsync(ForgetPasswordViewModel request)
         {
             return (await _userManager.FindByEmailAsync(request.Email!))!;
         }
+
         public async Task ForgetPassword(IUrlHelper urlHelper, HttpContext HttpContext, AppUser hasUser)
         {
-
             string passwordResetToken = await _userManager.GeneratePasswordResetTokenAsync(hasUser); //token oluştur hasUser kullanıcısı için.
 
             var passwordResetLink = urlHelper.Action("ResetPassword", "Home", new { userId = hasUser.Id, Token = passwordResetToken }
@@ -130,8 +126,6 @@ namespace AspNetCoreIdentity.Service.Services
 
             //emailservice
             await _emailService.SendResetPasswordEmail(passwordResetLink!, hasUser.Email!);
-
-
         }
 
         public async Task<AppUser> HasUserFindByIdAsync(string userId)
@@ -145,7 +139,52 @@ namespace AspNetCoreIdentity.Service.Services
 
             return (result, result.Errors);
         }
+
+        public async Task<(bool, IEnumerable<IdentityError>)> ExternalResponse(ModelStateDictionary modelstate)
+        {
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+                return (false, null);
+            }
+            var loginResult = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
+
+            if (loginResult.Succeeded)
+            {
+                return (true, null); //returnUrl göndercez controllerda
+            }
+
+            var newUser = new AppUser();
+            newUser.Email = info.Principal.FindFirst(ClaimTypes.Email)!.Value;
+            string externalUserId = info.Principal.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+
+            if (info.Principal.HasClaim(x => x.Type == ClaimTypes.Name))
+            {
+                var userName = info.Principal.FindFirst(ClaimTypes.Name)!.Value;
+
+                userName = userName.Replace(' ', '-').ToLower() + externalUserId.Substring(0, 5).ToString();
+                newUser.UserName = userName;
+            }
+            else
+            {
+                newUser.UserName = info.Principal.FindFirst(ClaimTypes.Email)!.Value;
+            }
+
+            var createResult = await _userManager.CreateAsync(newUser);
+
+            if (createResult.Succeeded)
+            {
+                var newLoginResult = await _userManager.AddLoginAsync(newUser, info);
+                if (newLoginResult.Succeeded)
+                {
+                    await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
+                    return (true, null);
+                }
+            }
+            //sıkıntı şu burada email daha önce başka bi kullanıcıda olduğu için false dönüyo
+
+            //modelstate.AddModelError(string.Empty, createResult.Errors.ToString());
+            return (false, createResult.Errors);
+        }
     }
-
-
 }
