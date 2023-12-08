@@ -210,7 +210,7 @@ namespace AspNetCoreIdentity.Web.Controllers
 
         public async Task<IActionResult> ExternalResponse(string returnUrl = "/")
         {
-            var (isSuccess, errors) = (await _homeService.ExternalResponse(ModelState));
+            var (isSuccess, errors) = await _homeService.ExternalResponse();
             if (!isSuccess)
             {
                 ModelState.AddModelErrorList(errors); //responsedan gelen Identity errors modele eklendi
