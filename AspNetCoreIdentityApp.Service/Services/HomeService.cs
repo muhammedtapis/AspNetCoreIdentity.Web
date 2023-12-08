@@ -140,7 +140,7 @@ namespace AspNetCoreIdentity.Service.Services
             return (result, result.Errors);
         }
 
-        public async Task<(bool, IEnumerable<IdentityError>)> ExternalResponse(ModelStateDictionary modelstate)
+        public async Task<(bool, IEnumerable<IdentityError>)> ExternalResponse()
         {
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)

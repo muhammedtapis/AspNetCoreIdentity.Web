@@ -35,6 +35,6 @@ namespace AspNetCoreIdentity.Service.Services
         //parola resetle geriye result ve hata listesi dön
         Task<(IdentityResult, IEnumerable<IdentityError>)> ResetPassword(AppUser hasUser, string token, string newPassword);
 
-        Task<(bool, IEnumerable<IdentityError>)> ExternalResponse(ModelStateDictionary modelstate);
+        Task<(bool, IEnumerable<IdentityError>)> ExternalResponse();
     }
 }
